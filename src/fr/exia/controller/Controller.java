@@ -16,7 +16,7 @@ public class Controller implements IController, SerialPortEventListener {
 	private Model m_model;
 	
     //for containing the ports that will be found
-    private Enumeration ports = null;
+    private Enumeration<?> ports = null;
     
     //map the port names to CommPortIdentifiers
     private HashMap<String, CommPortIdentifier> portMap = new HashMap<String, CommPortIdentifier>();
@@ -61,20 +61,38 @@ public class Controller implements IController, SerialPortEventListener {
     //an exception is generated
 	@Override
 	public boolean connectToArduino() {
-		if (portMap.size() != 1) {
-			System.out.println("TODO: Nombre de ports incorrect: " + portMap.size()); //TODO
+		String selectedPort;
+		
+		//Sélection du port Arduino
+		//EN CAS DE BUG: sudo chmod 666 /dev/ttyACM* est votre ami
+		
+		switch (portMap.size()) {
+		case 0:
+			System.out.println("Aucun port trouvé. Avez-vous les permissions de lecture/écriture?");
+			return false;
+		case 1:
+			selectedPort = (String) portMap.keySet().toArray()[0];
+			System.out.println("Un seul port trouvé: " + selectedPort);
+			break;
+		default:
+			//TODO
+			System.out.println("Plusieurs appareils ont été détectés!");
+			System.out.println("TODO sélectionner le bon.");
+			for (String s : portMap.keySet()) {
+				System.out.println(s);
+			}
 			return false;
 		}
 		
         //String selectedPort = (String)window.cboxPorts.getSelectedItem();
-        selectedPortIdentifier = (CommPortIdentifier)portMap.get("/dev/ttyACM0"); //TODO
+        selectedPortIdentifier = (CommPortIdentifier)portMap.get(selectedPort); //TODO
 
         CommPort commPort = null;
 
         try
         {
             //the method below returns an object of type CommPort
-            commPort = selectedPortIdentifier.open("TigerControlPanel", TIMEOUT);
+            commPort = selectedPortIdentifier.open("Frigogidaire", TIMEOUT);
             
             //the CommPort object can be casted to a SerialPort object
             serialPort = (SerialPort)commPort;
@@ -90,7 +108,7 @@ public class Controller implements IController, SerialPortEventListener {
         }
         catch (Exception e)
         {
-            System.out.println("Failed to open " + "/dev/ttyACM0" + "(" + e.toString() + ")"); //TODO
+            System.out.println("Failed to open " + selectedPort + "(" + e.toString() + ")"); //TODO
             return false;
         }
         
@@ -119,12 +137,28 @@ public class Controller implements IController, SerialPortEventListener {
 
 	@Override
 	public void sendValuesToModel() {
-		// TODO First, we have to retrieve the values
-		int humidity = this.m_lastReceivedData;
-		int temperature = this.m_lastReceivedData;
+		float humidity;
+		float temperature;
+		String[] split;
 		
-		//We send this to the model, it will notify observers
-		this.m_model.setValues(temperature, humidity);
+		//format has to be "humidityPercentage;temperature"
+		// eg. "50;42"
+		
+		System.out.println("Received: " + this.m_lastReceivedData);
+		
+		try {
+			//delete line ends
+			split = this.m_lastReceivedData.replaceAll("(\\r|\\n)", "").split(";");
+			
+			humidity = Float.parseFloat(split[0]);
+			temperature = Float.parseFloat(split[1]);
+			
+			//We send this to the model, it will notify observers
+			this.m_model.setValues(temperature, humidity);
+		}
+		catch (Exception e) {
+			System.out.println("Could not split result: " + e.getMessage());
+		}
 	}
 
 	//what happens when data is received
@@ -173,9 +207,7 @@ public class Controller implements IController, SerialPortEventListener {
             //get only serial ports
             if (curPort.getPortType() == CommPortIdentifier.PORT_SERIAL)
             {
-                //window.cboxPorts.addItem(curPort.getName());
                 portMap.put(curPort.getName(), curPort);
-                System.out.println("Found port:" + curPort.getName());
             }
         }
         
@@ -222,4 +254,29 @@ public class Controller implements IController, SerialPortEventListener {
         return true;
     }
 
+	@Override
+	public void sendInstructionToArduino(float fInstruction) {
+		int asciiEq;
+		
+		try {
+			//Convert string to Ascii
+			
+			//Perfect world implementation:
+			//output.write(fInstruction + ";");
+			
+			String sInstruction = String.valueOf(fInstruction);
+			sInstruction += ";";
+			
+
+			for (int i = 0; i < sInstruction.length(); i++) {
+				asciiEq = (int)sInstruction.charAt(i);
+				
+				output.write(asciiEq);
+			}
+			
+			
+		} catch (IOException e) {
+			System.out.println("Could not write " + fInstruction + " to Arduino.");
+		}
+	}
 }

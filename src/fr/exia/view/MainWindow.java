@@ -1,12 +1,16 @@
 package fr.exia.view;
 
+import java.util.Observable;
+import java.util.Observer;
+
 import org.gnome.gdk.Event;
 import org.gnome.gtk.*;
 
 import fr.exia.controller.IController;
+import fr.exia.model.Model;
 
 //TODO Singleton
-public class MainWindow extends Window{
+public class MainWindow extends Window implements Observer {
 	
 	private Label m_tempLabelValue = null;
 	private Label m_humidityLabelValue = null;
@@ -18,7 +22,7 @@ public class MainWindow extends Window{
 		super();
 		
 		if(controller == null) {
-			System.out.println("Contrôlleur incorrect");
+			System.out.println("Contrôlleur non instancié.");
 			System.exit(-1);
 		}
 		
@@ -35,7 +39,7 @@ public class MainWindow extends Window{
 		HBox tempLayout = new HBox(true, 0);
 		HBox humidityLayout = new HBox(true, 0);
 		HBox instructionLayout = new HBox(true, 0);
-		HScale instructionField = new HScale(0, 100, 1);
+		HScale instructionField = new HScale(0, 30, 1);
 		Button updateButton = new Button("Actualiser Consigne");
 		
 		this.m_tempLabelValue = new Label("Chargement..");
@@ -79,8 +83,8 @@ public class MainWindow extends Window{
 			public void onClicked(Button source) {
 				try {
 					double dInstruction = instructionField.getValue();
-					displayTemperature(dInstruction); // juste pour tester
-					//m_controller.sendInstruction(fInstruction);
+					//displayTemperature(dInstruction); // juste pour tester
+					m_controller.sendInstructionToArduino((float)dInstruction);
 				}
 				catch (Exception e) {
 					System.out.println(e.getMessage());
@@ -103,5 +107,32 @@ public class MainWindow extends Window{
 		
 		this.m_tempLabelValue.setLabel(newTemp + "°C");
 		this.m_progressTemp.setValue(newTemp);
+	}
+	
+	public void displayHumidity(double newHumidity) {
+		if (newHumidity < 0) {
+			System.out.println("L'humidité relevée est inférieure à 0:" + newHumidity);
+			newHumidity = 0;
+		}
+		else if (newHumidity > 100) {
+			System.out.println("L'humidité relevée est supérieure à 100:" + newHumidity);
+			newHumidity = 100;
+		}
+		
+		this.m_humidityLabelValue.setLabel(newHumidity + "%");
+		this.m_progressHumidity.setValue(newHumidity);
+	}
+
+	@Override
+	public void update(Observable model, Object obj) {
+		if(obj instanceof Model) {
+			Model tmpMdl;
+			tmpMdl = (Model)obj;
+			this.displayTemperature(tmpMdl.getTemperature());
+			this.displayHumidity(tmpMdl.getHumidity());
+		}
+		else {
+			System.out.println("L'objet observable n'est as un Model");
+		}
 	}
 }

@@ -10,22 +10,22 @@ import org.gnome.gtk.Gtk;
 public class mainClass {
 
 	public static void main(String[] args) {
-		System.out.println("Starting GTK");
+		//Instance MVC objects
 		Gtk.init(args);
-		System.out.println("GTK Started, testing RXTX");
 		
 		Model model = new Model(); //Model
 		Controller controller = new Controller(model); //Controller
 		MainWindow view = new MainWindow(controller); //View
 		
-		
-		System.out.println("All libraries loaded.");
-		System.out.println("=============");
-		
+		//Make sure connection is successful
 		if(!controller.connectToArduino()) {
 			System.exit(-1);
 		}
 		
+		//When the model updates, refreshes the view
+		model.addObserver(view);
+		
+		//Shows the main window
 		view.showAll();
 		
 		Gtk.main();
