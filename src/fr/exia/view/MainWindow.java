@@ -45,6 +45,8 @@ public class MainWindow extends Window implements Observer {
 		this.m_tempLabelValue = new Label("Chargement..");
 		this.m_humidityLabelValue = new Label("Chargement..");
 		
+		instructionField.setValue(15);
+		
 		tempLayout.packStart(new Label("Température (°C)"), true, true, 0);
 		tempLayout.packStart(this.m_progressTemp, true, true, 0);
 		tempLayout.packStart(this.m_tempLabelValue, true, false, 0);
@@ -128,11 +130,19 @@ public class MainWindow extends Window implements Observer {
 		if(obj instanceof Model) {
 			Model tmpMdl;
 			tmpMdl = (Model)obj;
-			this.displayTemperature(tmpMdl.getTemperature());
+			this.displayTemperature(tmpMdl.getIntTemperature());
 			this.displayHumidity(tmpMdl.getHumidity());
 		}
+		else if (obj instanceof String && (String)obj == "opened"){
+			//Info
+			InfoMessageDialog msgBox = new InfoMessageDialog(this, "Porte ouverte", "Attention, la porte a été ouverte!");
+			msgBox.setSecondaryText("Veuillez fermer la porte.");
+			msgBox.run();
+			msgBox.hide();
+			msgBox = null;
+		}
 		else {
-			System.out.println("L'objet observable n'est as un Model");
+			System.out.println("La view a été notifiée d'un évènement non pris.");
 		}
 	}
 }

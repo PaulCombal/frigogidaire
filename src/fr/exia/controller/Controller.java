@@ -138,23 +138,28 @@ public class Controller implements IController, SerialPortEventListener {
 	@Override
 	public void sendValuesToModel() {
 		float humidity;
-		float temperature;
+		float int_temperature;
+		float ext_temperature;
+		float pel_temperature;
 		String[] split;
 		
-		//format has to be "humidityPercentage;temperature"
-		// eg. "50;42"
+		//format has to be "humidityPercentage;inside temperature;exterior temperature;peltier temperature"
+		// eg. "50;42;45;56"
 		
-		System.out.println("Received: " + this.m_lastReceivedData);
+		//System.out.println("Received: " + this.m_lastReceivedData);
 		
 		try {
 			//delete line ends
 			split = this.m_lastReceivedData.replaceAll("(\\r|\\n)", "").split(";");
 			
 			humidity = Float.parseFloat(split[0]);
-			temperature = Float.parseFloat(split[1]);
+			int_temperature = Float.parseFloat(split[1]);
+			ext_temperature = Float.parseFloat(split[2]);
+			pel_temperature = Float.parseFloat(split[3]);
 			
 			//We send this to the model, it will notify observers
-			this.m_model.setValues(temperature, humidity);
+			this.m_model.setValues(int_temperature, ext_temperature, pel_temperature, humidity);
+			System.out.println(this.m_model);
 		}
 		catch (Exception e) {
 			System.out.println("Could not split result: " + e.getMessage());
@@ -273,6 +278,8 @@ public class Controller implements IController, SerialPortEventListener {
 				
 				output.write(asciiEq);
 			}
+			
+			this.m_model.setInstruction(fInstruction);
 			
 			
 		} catch (IOException e) {

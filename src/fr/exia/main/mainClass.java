@@ -15,7 +15,7 @@ public class mainClass {
 		
 		Model model = new Model(); //Model
 		Controller controller = new Controller(model); //Controller
-		MainWindow view = new MainWindow(controller); //View
+		MainWindow2 view = new MainWindow2(controller); //View
 		
 		//Make sure connection is successful
 		if(!controller.connectToArduino()) {
