@@ -124,15 +124,15 @@ public class MainWindow2 extends Window implements Observer {
 	public void displayTemperature(double interior, double exterior, double peltier) {
 		//INTERIOR
 		
-		this.updateTemp(interior, this.m_int_tempLabelValue, this.m_int_progressTemp);
+		this.updateTemp(Math.round(interior * 100.0) / 100.0, this.m_int_tempLabelValue, this.m_int_progressTemp);
 		
 		//EXTERIOR
 		
-		this.updateTemp(exterior, this.m_ext_tempLabelValue, this.m_ext_progressTemp);
+		this.updateTemp(Math.round(exterior * 100.0) / 100.0, this.m_ext_tempLabelValue, this.m_ext_progressTemp);
 		
 		//PELTIER
 		
-		this.updateTemp(peltier, this.m_pel_tempLabelValue, this.m_pel_progressTemp);
+		this.updateTemp(Math.round(peltier * 100.0) / 100.0, this.m_pel_tempLabelValue, this.m_pel_progressTemp);
 	}
 	
 	public void displayHumidity(double newHumidity) {
